@@ -1,27 +1,25 @@
 ---
 layout: post
-title: LLM training and inference system - a software view
+title: Understanding LLM System with 3-layer Abstraction
 ---
 
-Optimizing an LLM inference software system requires a thorough understanding of the full stack. As the inference ecosystem becomes more complex over time, understanding a system requires different levels of abstraction. This article is not a review, nor a best practice guide, but a sharing of my perspective on the full picture, key bottlenecks.
+Performance optimization of LLM system requires a thorough understanding of the full software stack. As ML ecosystem becomes more complex over time, understanding a system requires different levels of abstraction. This article is not a review, nor a best practice guide, but a sharing of my perspective on the full picture, key bottlenecks.
 
 First of all, a system is designed for objectives under constraints. 
 For an LLM system, the most important objectives are **throughput** (total tokens per second) and **latency** (tokens per second per user), and the constraints are **compute** (operation speed and types), **memory** (memory size and hierarchy), and **communication** (bandwidth, latency and hierarchy).
- Google has a great book that talks about these three concepts, see [Scaling Book - Section Roofline](https://jax-ml.github.io/scaling-book/roofline/).  
+ Google has a great book on these three concepts, see Section Roofline in [Scaling Book](https://jax-ml.github.io/scaling-book/roofline/).  
 
-### Understanding LLM system with 3-layer abstraction model
+### Explain 3-layer abstraction model
 
-To understand a system, layered abstraction is a good approach. 
-I personally like to abstract a machine learning system into 3 layers \- **kernel layer**, **model layer** and **system layer**. Each abstraction layer handles a specific type and granularity of constraints and exposes unique optimization opportunities. 
+In my own mind model, I am usually able to abstract most existing LLM systems into 3 layers \- **kernel layer**, **graph layer** and **system layer**, with the description of each layer summarized in the following table. Each abstraction layer handles a specific type and granularity of constraints and exposes unique optimization opportunities, which we will cover in details.
 
-Below is the summary of the 3 abstraction layers. 
 For example, Triton and CUDA are grouped into the same layer because they are essentially optimizing the same targets at chip/micro-architecture level, even though Triton provides a higher-level interface than CUDA. Such a abstraction model sets up a holistic view of the key trade-offs at different levels.
 
 | Abstraction Layer |  Operations | Representative Software |
 | :---- | :---- | :---- |
-| Kernel programming | Scalar/Tile instructions | CUDA, Triton |
-| Model programming | Tensor operations| PyTorch, JAX, TensorRT, ONNXRuntime |
-| System programming | Sharding, batching, offloading, etc| TensorRT-LLM, vLLM, Megatron-LM |
+| Kernel | Scalar/Tile instructions | CUDA, Triton |
+| Graph | Tensor operations | PyTorch, JAX, TensorRT, ONNXRuntime |
+| System | Sharding, batching, offloading, etc| TensorRT-LLM, vLLM, Megatron-LM |
 
 #### Kernel programming layer
 Kernel layer focuses on software optimization at the micro-architecture level. A kernel is the smallest unit of workload executed on an accelerator like GPU.
@@ -48,16 +46,16 @@ Note that the tile size depends on the processor's local memory size and compute
 
 Another great example is the use of online softmax in flash attention. Softmax is computed on a full row of the big attention matrix, which requires a lot of data movement (in contrast to data locality\!) Online softmax solves this problem by converting the global formula to a recurrent formula. In the new recurrent formula, no read/write from global memory is required at all.
 
-#### Model programming layer
+#### Graph programming layer
 
+Graph programming layer focuses on the model graph executed on a single GPU. 
 Programming at this layer emphasizes the composability and ease of change for ML models. Early in the day, composability usually sacrifices speed, and that's why dedicated frameworks like ONNXRuntime and TensorRT are used in serious inference scenarios.  
 Nowadays, PyTorch also captures a great share of inference market due to two reasons: reduced overhead of PyTorch by CUDA graph, torch compile, etc; greater model sizes that dwarf the framework overhead.
 
-
-As the name suggests, this layer focuses on model-level optimizations that are associated with the properties of the machine learning models.  
+Optimizations at graph layer that originate from the characteristics of consecutive kernels and the nature of ML models themselves.
 Generally, the goal is still to reduce communication and memory size and improve compute efficiency. Specifically, there are the following common types of optimization:
 
-**Merging** is a low-hanging fruit. It converts two tensor operations into one mathematically equivalent operation. Example is Conv/BatchNorm merging and Multi-FC merging. One recent merging method is MLA BMM merging, which comes at the cost of increased computation but reduces data movement (To fill in).
+**Merging** is a low-hanging fruit. It converts two tensor operations into one mathematically equivalent operation. Example is Conv/BatchNorm merging and Multi-FC merging. One recent merging method is MLA weight absorb, which allows inference framework to trade computation for memory/communication at decode phase and vice versa at prefill phase.
 
 **Fusion** is another commonly used technique and often confused with merging. Fusion doesn't alter the mathematical formula \- it simply combines two kernels to overlap communication and computation, avoid writeback to main memory, and/or reduce kernel launch time. An example is Conv/ReLU fusion, which performs in-place ReLU instead of writing data to main memory and reading it back just for the cheap ReLU operation. In some situations, people also do GEMM/AllReduce fusion, by which partial output is immediately synchronized once computed in order to reduce latency.
 
@@ -72,7 +70,9 @@ An example of Llama3 implemented on GPU is shown in the following figure. Each r
 
 **Sparsity** can be dated back to Yann LeCun's [Optimal Brain Damage](https://proceedings.neurips.cc/paper/1989/hash/6c9882bbac1c7093bd25041881277658-Abstract.html) paper in 1989. In the early days, people were more focused on static sparsity, e.g. channel pruning, 2:4 sparsity. In the era of LLM, more evidences show that total parameters matters a lot and dynamic sparsity starts to get more traction. Examples are attention sparsity. 
 
-Many optimizations are actually done at the model design phase, with hardware constraints in mind. In the early days, MobileNet was invented to alleviate the high computational density of convolution. Now in the era of LLM, bandwidth becomes the key bottleneck and we are seeing optimization like MoE and GQA/MLA/SSM in the architecture design. MoE could also be viewed as trained dynamic sparsity, and it should be pointed out that MoE and hard attention have many similarities if we view expert weights as activated tokens
+Additional optimizations specific to GPU include **CUDA graph** and **multi-stream**. CUDA graph pre-records the kernel dependency graph to reduce launch latency. Multi-stream allows overlapping kernels with small workloads to improve GPU efficiency.
+
+More optimizations are actually done at the model design phase with hardware constraints in mind. In the early days, MobileNet was invented to alleviate the high computational density of convolution. Now in the era of LLM, bandwidth becomes the key bottleneck and we are seeing optimization like MoE and GQA/MLA/SSM in the architecture design. MoE could also be viewed as trained dynamic sparsity, and it should be pointed out that MoE and hard attention have many similarities if we view expert weights as activated tokens.
 
 #### System programming layer
 
@@ -98,8 +98,8 @@ Again, we look at optimizations that better utilize system computation, memory a
 | Expert parallel | Parallelize MoE at expert dimension | No improvement for latency at small batch size. Low communication cost when experts are highly sparse. Saves model memory. |
 | Sequence parallel | Parallelize layernorm and/or attention proj layers at sequence dimension | Augment tensor parallel. Low communication cost. |
 | Context parallel | Parallelize all layers at sequence dimension | Improve latency for long context prefill. High communication cost.  |
-| FSDP | Split FC layers weights | Overlaps computation and communication, but each shard still carries full computation. For training only.|
-| ZeRO | Split optimizer states (stage 1), gradients (stage 2), and weights (stage 3) | for training only. |
+| FSDP | Shard FC layers weights | Overlaps computation and communication, but each shard still carries full computation. For training only.|
+| ZeRO | Shard optimizer states (stage 1), gradients (stage 2), and weights (stage 3) | For training only. |
 
 For inference-time scaling, when the model size is not too large (\<100GB), the common practice is to scale up with tensor parallel to the point where communication latency becomes nontrivial, and then to scale out with pipeline parallel and data parallel. For very large models, e.g., DeepSeek V3, the optimal parallelism is a much more complex problem. That's why we are seeing tools like [NVIDIA Dynamo](https://github.com/ai-dynamo/dynamo) to optimize the parallelism and etc.
 The similar situation is also true for training-time parallelism, which is usually designed and hand-tuned specifically for model architecture and datacenter configurations.
@@ -109,7 +109,7 @@ The similar situation is also true for training-time parallelism, which is usual
 
 For inference, the most important throughput metric is total tokens per second (TPS) and the latency metrics are time per output token (TPOT) and time to first token (TTFT).
 
-The no-brainer optimization is to avoid recomputation by KV cache, prefix caching, offloading, etc. Beyond that, **most of the throughput optimizations are just smart ways of batching**. Batching is the most effective way to improve GPU utilization. Continuous batching was designed to aggregate requests of different sizes. KV cache optimization, like paged attention, increases maximum batch size under fixed memory. Even latency optimization techniques like speculative decoding can be viewed as a form of batching.
+The no-brainer optimization is to avoid recomputation, with methods like KV cache, prefix caching, offloading, etc. Beyond that, **the key of throughput optimizations batching**, and many methods are just smart ways of batching. Continuous batching was designed to aggregate requests of different length from prefill and decode. KV cache optimization, like paged attention, increases maximum batch size within fixed memory. Even latency optimization techniques like speculative decoding can be viewed as a form of batching.
 
 Regarding latency, it is generally a trade-off with throughput adjusted by parallelism. Generally, if you want every single token to be generated faster, you need to sacrifice the number of tokens that are simultaneously generated (the concurrency). A trade-off curve was shown in GTC 2025. Somehow, quite a few friends complained to me this figure is difficult to understand.
 
@@ -126,7 +126,7 @@ Compared with inference, due to less concern on latency and faster evolving trai
 
 Pretraining used to be the center of focus. It operates at a very large scale of GPUs in a throughput-oriented manner, with Model Flops Utilization (MFU) being the key metric. At this scale, resiliency to failure becomes a critical measure to improve MFU beyond choosing the right parallelism. Examples methods are fault tolerance and async checkpointing, see more details at [NVIDIA Resiliency Extension](https://github.com/NVIDIA/nvidia-resiliency-ext).
 
-Post-training was once viewed as a lesser important problem due to its small scale. The rise of Reinforcement learning (RL) changed this. RL poses many new system-level challenges beyond parallelism. I call it **parallelism and placement** problem, which has been discussed in [HybridFlow](https://arxiv.org/pdf/2409.19256):
+Post-training optimization was once viewed as a less crucial problem due to its small scale. The rise of Reinforcement learning (RL) changed this. RL poses many new system-level challenges beyond parallelism. I call it **parallelism and placement** problem, which has been discussed in [HybridFlow](https://arxiv.org/pdf/2409.19256):
 
 1. Multiple models (actor, critic, reward model, etc) and their data dependency lead to such a dilemma that \- either colocate multiple models at the cost of precious GPU memory, or host models on separate GPUs at the cost of idle compute time.
 2. Training and rollout (generation) are completely different workloads. Using a dedicated inference framework and resharding the weights every iteration could be essential.
@@ -150,19 +150,9 @@ Any system design is built on shifting sands, as the trade-offs between model ar
 1. [https://jax-ml.github.io/scaling-book/](https://jax-ml.github.io/scaling-book/)  
 2. Semi-analysis: https://semianalysis.com/2024/09/03/the-memory-wall/  
 3. AI and memory wall: [https://arxiv.org/pdf/2403.14123](https://arxiv.org/pdf/2403.14123)  
-4. Tensor Core analysis: [https://zhuanlan.zhihu.com/p/638129792](https://zhuanlan.zhihu.com/p/638129792)  
-   1. [https://arxiv.org/html/2402.13499v1](https://arxiv.org/html/2402.13499v1)  
-5. [https://hazyresearch.stanford.edu/blog/2024-05-12-tk](https://hazyresearch.stanford.edu/blog/2024-05-12-tk)  
-6. [https://chatgpt.com/share/67eb86bc-3804-8009-be96-102499679fb9](https://chatgpt.com/share/67eb86bc-3804-8009-be96-102499679fb9)  
-7. [https://en.wikipedia.org/wiki/File:High_Bandwidth_Memory_schematic.svg](https://en.wikipedia.org/wiki/File:High_Bandwidth_Memory_schematic.svg)  
-8. [https://zhuanlan.zhihu.com/p/25529708891](https://zhuanlan.zhihu.com/p/25529708891)  
+4. [https://arxiv.org/html/2402.13499v1](https://arxiv.org/html/2402.13499v1)  
 9. Thunderkitten: 2D tile, 1d vector: [https://hazyresearch.stanford.edu/blog/2024-05-12-tk](https://hazyresearch.stanford.edu/blog/2024-05-12-tk)  
 10. SambaNova hotchips talk: [https://hc2024.hotchips.org/assets/program/conference/day1/48_HC2024.Sambanova.Prabhakar.final-withoutvideo.pdf](https://hc2024.hotchips.org/assets/program/conference/day1/48_HC2024.Sambanova.Prabhakar.final-withoutvideo.pdf)  
 11. CUDA GTC talk: https://www.nvidia.com/en-us/on-demand/session/gtc25-s72383/  
-    1. ![][image4]  
-    2. ![][image5]  
 12. Deepseek inference system: [https://github.com/deepseek-ai/open-infra-index/blob/main/202502OpenSourceWeek/day_6_one_more_thing_deepseekV3R1_inference_system_overview.md](https://github.com/deepseek-ai/open-infra-index/blob/main/202502OpenSourceWeek/day_6_one_more_thing_deepseekV3R1_inference_system_overview.md)  
-13. Mooncake  
 14. PD disaggregated  
-    1. ![][image6]  
-    2. ![][image7]
