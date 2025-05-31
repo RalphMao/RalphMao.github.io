@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Understanding LLM System with 3-layer Abstraction
+tags: [LLM, System]
 ---
 
 Performance optimization of LLM systems requires a thorough understanding of the full software stack. As the ML ecosystem becomes increasingly complex, understanding these systems demands different levels of abstraction. This article is not a comprehensive review or best practice guide, but rather a sharing of my perspective on the complete picture and key bottlenecks.
