@@ -60,14 +60,14 @@ Graph programming layer focuses on optimizing the model graph executed on a sing
 
 Graph-layer optimizations exploit the characteristics of consecutive kernels and the inherent properties of ML models. The overarching goal remains reducing communication and memory usage while improving compute efficiency. Specifically, there are the following common types of optimization:
 
-**Merging** converts multiple tensor operations into a single mathematically equivalent operation. Examples include Conv/BatchNorm merging and Multi-FC merging. A recent merging technique is MLA weight absorb, which enables decode-time memory saving at the cost of more computation.
+**Merging** converts multiple tensor operations into a single mathematically equivalent operation. Examples include Conv/BatchNorm merging and Multi-FC merging. A recent merging technique is [MLA weight absorb](https://arxiv.org/pdf/2405.04434) which enables decode-time memory saving at the cost of more computation.
 
 **Fusion** is another commonly used technique and often confuses with merging. It combines multiple kernels without altering the mathematical formulation. This technique overlaps communication with computation, avoids writeback to main memory, and reduces kernel launch overhead. For example, Conv/ReLU fusion performs in-place ReLU operations instead of writing/reading to the main memory. In multi-GPU inference, GEMM/AllReduce fusion is sometimes to reduce latency, which synchronizes partial outputs immediately upon computation.
 
-The following graph programming example is an optimized Llama3 execution graph on GPU. Each rectangle represents a kernel launched to the GPU, with merging operations denoted by & and fusion operations denoted by +.
+The following graph programming example is an optimized Llama3 execution graph on GPU. Each rectangle represents a kernel launched to the GPU, with merging operations denoted by **&** and fusion operations denoted by **+**.
 ![Visualization of Llama3 execution graph](/images/blog1/model.png)
 
-**Quantization** aka low precision, is one of the most widely used techniques in ML system optimization and a great example of algorithm/hardware co-evolution. In the CNN era, 8-bit quantization is typically good enough. In the LLM era, the need for more compression keeps pushing the frontier of quantization. Some general observations on the current stage of quantization:
+**Quantization** aka low precision, is one of the most widely used techniques in ML system optimization and a great example of algorithm/hardware co-evolution. In the CNN era, 8-bit quantization is typically good enough. In the LLM era, the need for more compression keeps pushing the frontier of quantization. I initialized and have been working on [TensorRT Model Optimizer](https://github.com/NVIDIA/TensorRT-Model-Optimizer/tree/main) for the past few years and we have a [brief description of quantization](https://nvidia.github.io/TensorRT-Model-Optimizer/guides/_basic_quantization.html). Some general observations on the current stage of quantization:
 
 1. Quantization extends beyond most common weight quantization to activations, KV cache, gradients, and communication.
 2. Inference typically leads training in precision reduction. As of 2025, FP4 is largely de-risked for inference with FP8 already becoming mainstream, while training shows early FP8 adoption with BF16 as the standard.
