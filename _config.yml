@@ -18,18 +18,19 @@ avatar: images/404.jpg
 # Includes an icon in the footer for each username you enter
 footer-links:
   dribbble:
-  email:
+  email: ralphmao95 AT gmail DOT com
   facebook:
   flickr:
   github: 
   instagram:
-  linkedin:
+  linkedin: https://www.linkedin.com/in/huizi-mao-38b82565/
   pinterest:
   rss: # just type anything here for a working RSS icon
   twitter: 
   stackoverflow: # your stackoverflow profile, e.g. "users/50476/bart-kiers"
   youtube: # channel/<your_long_string> or user/<user-name>
   googleplus: # anything in your profile username that comes after plus.google.com/
+  googlescholar: https://scholar.google.com/citations?user=r5WezOYAAAAJ
   blog: blog # Point blog link to homepage
 
 
