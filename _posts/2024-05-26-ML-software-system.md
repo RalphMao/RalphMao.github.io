@@ -15,9 +15,9 @@ The table below summarizes the basics of 3 abstraction layers.
 
 | Abstraction Layer |  Operations | Representative Software |
 | :---- | :---- | :---- |
-| Kernel | Scalar/Tile instructions | CUDA, Triton |
-| Graph | Tensor operations | PyTorch, JAX, TensorRT, ONNXRuntime |
-| System | Sharding, batching, offloading | TensorRT-LLM, vLLM, Megatron-LM |
+| Kernel | Scalar/Vector/Tile instructions | CUDA, Triton |
+| Graph | Tensor primitives | PyTorch, JAX, TensorRT, ONNXRuntime |
+| System | Sharding, Batching, Offloading, .. | TensorRT-LLM, vLLM, Megatron-LM |
 
 It should be noted that Triton and CUDA belong in the same category, despite Triton's higher-level interface, both fundamentally optimize performance at the compiler and micro-architecture level. Similarly, while PyTorch and TensorRT serve different use cases, they both operate on tensor-level abstractions and optimize the model graph as a whole.
 
@@ -28,16 +28,16 @@ The kernel layer focuses on software execution at the micro-architecture level. 
 
 The programming model at this layer maps available hardware resources (general-purpose cores, matrix multiplication units, near-processor memory, GPU memory) to programming concepts (threads & blocks, local memory, global memory) and exposes the necessary instructions for users to manipulate them.
 
-CUDA has been the de facto standard for GPU kernel programming. As the need of kernel programming increases in recent years, a number of choices at this layer have become available. Two different trends are observed, which are not mutually exclusive:
+CUDA C language has been the de facto standard for GPU kernel programming. As the need of kernel programming increases in recent years, a number of choices at this layer have become available. Two different trends are observed, which are not mutually exclusive:
 
 1. **Tile languages** like Triton, CuTile, and TileLang elevate the control granularity from thread to block and data granularity from scalar to tile. Users only handle block-level logic while intra-block arrangement is delegated to the compiler. This approach offers two key advantages: simpler programming for users, especially machine learning engineers and researchers; and easier maintenance of cross-platform compatibility. For example, whether to use 128x32 MMA instructions or 32x32 MMA instructions is now decided by the compiler rather than users, making it easier to support different hardware.
 
 2. **Template frameworks** like CUTLASS. Since matrix multiplication is the most important optimization problem in kernel programming, CUTLASS handles the core matrix multiplication while leaving customizable "peripheral" code to users. 
 
-Kernel performance is measured by latency (throughput is not directly exposed at this layer). Common optimization techniques include:
-1. Exploit data locality. Utilize near-processor register, cache and shared memory to reduce data movement.
-2. Improve data movement efficiency. Use swizzling to avoid bank conflicts. Overlap data loading and computation.
-3. Utilize special instructions. Use TensorCore MMA (matrix multiplication accumulation) and Hopper TMA (tensor matrix accumulation).
+Kernel performance is measured by latency (throughput is not directly exposed at this layer). Most optimization techniques can be categorized into:
+1. **Data locality**. Example: utilize near-processor register, cache and shared memory to avoid data movement.
+2. **Data movement efficiency**. Example: use swizzling to avoid bank conflicts; overlap data loading and computation.
+3. **Special instructions**. Example: use TensorCore MMA (matrix multiplication accumulation) and Hopper TMA (tensor matrix accumulation).
 
 There are also specific optimizations for different hardware or different generations of hardware. Most of them, including NVIDIA GPU, do not have detailed public documentation on the low-level details.
 
