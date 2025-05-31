@@ -18,7 +18,7 @@ The table below summarizes the basics of 3 abstraction layers.
 | :---- | :---- | :---- |
 | Kernel | Scalar/Vector/Tile instructions | CUDA, Triton |
 | Graph | Tensor primitives | PyTorch, JAX, TensorRT, ONNXRuntime |
-| System | Sharding, Batching, Offloading, .. | TensorRT-LLM, vLLM, Megatron-LM |
+| System | Sharding, Batching, Offloading, .. | TensorRT-LLM, vLLM, Megatron-LM, VeRL |
 
 It should be noted that Triton and CUDA belong in the same category, despite Triton's higher-level interface, both fundamentally optimize performance at the compiler and micro-architecture level. Similarly, while PyTorch and TensorRT serve different use cases, they both operate on tensor-level abstractions and optimize the model graph as a whole.
 
@@ -76,7 +76,7 @@ The following graph programming example is an optimized Llama3 execution graph o
 
 Additional GPU-specific optimizations include **CUDA graphs** and **multi-stream execution**. CUDA graphs pre-record kernel dependency graphs to reduce launch latency, while multi-stream execution overlaps small-workload kernels to improve GPU utilization.
 
-More graph-level optimizations actually occur during model design within hardware constraints, as the [Hardware Lottery paper](https://arxiv.org/abs/2009.06489) suggests. Early examples include Group Convolution, designed to reduce convolution's computational density. In the LLM era, bandwidth constraints drive architectural innovations like Mixture of Experts (MoE), Grouped Query Attention (GQA), Multi-Head Latent Attention (MLA), and State Space Models (SSM). MoE can be conceptualized as trained dynamic sparsity, with notable similarities to hard attention mechanisms when viewing expert weights as activated tokens.
+More graph-level optimizations actually occur during model design within hardware constraints, as the [Hardware Lottery](https://arxiv.org/abs/2009.06489) suggests. Early examples include Group Convolution, designed to reduce convolution's computational density. In the LLM era, bandwidth constraints drive architectural innovations like Mixture of Experts (MoE), Grouped Query Attention (GQA), Multi-Head Latent Attention (MLA), and State Space Models (SSM). MoE can be conceptualized as trained dynamic sparsity, with notable similarities to hard attention mechanisms when viewing expert weights as activated tokens.
 
 ### System programming layer
 
