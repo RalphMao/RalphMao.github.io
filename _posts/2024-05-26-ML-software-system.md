@@ -90,17 +90,17 @@ This layer deals with the resources needed by a model and the constraints of a p
 
 <figure>
   <img src="/images/blog1/system.png" alt="Visualization of inference system architecture">
-  <figcaption>Example of system layer using a simplified view of PD-disaggregated inference, from <a href="https://arxiv.org/pdf/2407.00079">Mooncake paper</a></figcaption>
+  <figcaption>Example of inference system using a simplified version of the <a href="https://arxiv.org/pdf/2407.00079">Mooncake paper</a></figcaption>
 </figure>
 
 Starting from this layer, inference and training frameworks diverge significantly. Inference frameworks like vLLM, SGLang, and TensorRT-LLM emphasize high-performance kernel, parallelism, smart request batching, and efficient KV management. Training frameworks iterate rapidly as algorithms evolve, with many serving as scaffolds for parallelism implementation (e.g., Megatron-LM, DeepSpeed). With the recent rise of Reinforcement Learning, there are more connections between training and inference - for example, VeRL emphasizes seamless integration of Megatron-LM, vLLM, and other frameworks.
 
 Again, we focus on optimizations that better utilize system computation, memory, and communication.
 
-**Parallelism is the key for both training and inference**. There are many good explanations available, such as the [NeMo documentation](https://docs.nvidia.com/nemo-framework/user-guide/latest/nemotoolkit/features/parallelisms.html).
+**Parallelism is the key for both training and inference**. There are many good explanations available, e.g., [NeMo Documentation](https://docs.nvidia.com/nemo-framework/user-guide/latest/nemotoolkit/features/parallelisms.html) and [DeepSpeed Documentation](https://www.deepspeed.ai/tutorials/zero/).
 
 Almost all parallelism strategies improve throughput. Not all of them improve latency.
-Parallelism selection is based mainly on memory and communication constraints. Overall computation is mostly a constant except for corner cases like FSDP and [TP vs DP Attention](https://lmsys.org/blog/2024-12-04-sglang-v0-4/#data-parallelism-attention-for-deepseek-models). Below is a table summarizing most common parallelism strategies.
+Choices of parallelism is determined by memory and communication constraints. Overall computation is mostly a constant except for corner cases like FSDP and [TP vs DP Attention](https://lmsys.org/blog/2024-12-04-sglang-v0-4/#data-parallelism-attention-for-deepseek-models). Below is a table summarizing most common parallelism strategies.
 
 | Type | Description | Pros & Cons |
 | :--- | :--- | :--- |
@@ -130,7 +130,7 @@ Advanced optimizations that push beyond this trade-off curve include **PD disagg
 
 #### Training system optimizations
 
-Compared to inference systems, training systems face different constraints: throughput driven, less stringent latency requirements, but facing rapidly evolving methodologies and model architectures. It often goes through rapid iterations when new architectures or new training techniques are introduced. I personally observed that training systems are less deeply optimized than inference (I don't take responsibility for this statement. There are exceptions like DeepSeek). 
+Compared to inference systems, training systems face different constraints: throughput driven, less stringent latency requirements, but facing rapidly evolving methodologies and model architectures. It often goes through rapid iterations when new architectures or new training techniques are introduced. I personally observed that training systems are less deeply optimized than inference (I don't take responsibility for this statement. There are exceptions like DeepSeek).
 
 **Pretraining** used to be the primary focus (probably still is). Operating at massive GPU scales in a throughput-oriented manner, Model FLOPs Utilization (MFU) serves as the key performance metric. Parallelism is the key of optimization, which we has already discussed. 
 
