@@ -24,7 +24,7 @@ It should be noted that Triton and CUDA belong in the same category, despite Tri
 
 Let's examine each layer in detail, starting from the lowest level of abstraction.
 
-### Kernel programming layer
+### Kernel layer
 The kernel layer focuses on software execution at the micro-architecture level. A kernel s the smallest unit of workload executed on an accelerator including GPU.
 
 The programming model at this layer maps available hardware resources (general-purpose cores, matrix multiplication units, near-processor memory, GPU memory) to programming concepts (threads & blocks, local memory, global memory) and exposes the necessary instructions for users to manipulate them.
@@ -56,7 +56,7 @@ Underlying the programming tile, the actual MMA size depends on the hardware. Fo
 
 Another excellent example is the use of online softmax in Flash Attention. Softmax is normally computed on a full row of the attention matrix, which requires substantial data movement. Online softmax solves this problem by converting the global formula to a recurrent formula. In this new recurrent formulation, no reads or writes from global memory are required.
 
-### Graph programming layer
+### Graph layer
 
 Graph programming layer focuses on optimizing the model graph executed on a single GPU. Programming at this layer emphasizes composability and ease of modification. Historically, composability came at the cost of performance, which is why dedicated frameworks like ONNXRuntime and TensorRT were widely used in serious inference scenarios. Today, PyTorch has captured significant inference market share due to two factors: reduced PyTorch overhead through CUDA graphs and torch.compile, and larger and larger models that dwarf framework overhead.
 
@@ -84,7 +84,7 @@ Additional GPU-specific optimizations include **CUDA graphs** and **multi-stream
 
 More graph-level optimizations actually occur during model design within hardware constraints, as the [Hardware Lottery](https://arxiv.org/abs/2009.06489) suggests. Early examples include Group Convolution, designed to reduce convolution's computational density. In the LLM era, bandwidth constraints drive architectural innovations like Mixture of Experts (MoE), Grouped Query Attention (GQA), Multi-Head Latent Attention (MLA), and State Space Models (SSM). MoE can be conceptualized as trained dynamic sparsity, with notable similarities to hard attention mechanisms when viewing expert weights as activated tokens.
 
-### System programming layer
+### System layer
 
 This layer deals with the resources needed by a model and the constraints of a pod - the minimum repeatable deployment unit. As an example, DeepSeek V3 has an official implementation with [inference pods of 176 GPUs](https://github.com/deepseek-ai/open-infra-index/blob/main/202502OpenSourceWeek/day_6_one_more_thing_deepseekV3R1_inference_system_overview.md) and [a training pod (whole cluster) of 2048 GPUs](https://arxiv.org/pdf/2412.19437). At the system level, we pay less attention to the internal details of a model, but abstract it as an elastic program (engine) with computation, memory, and communication need.
 
@@ -162,7 +162,7 @@ cornerstone just like speculative execution is for modern CPUs.
 System design operates on shifting foundations, where the optimal trade-off between physical constraints, model architecture, and applications continuously evolves. Today's optimal solutions may become tomorrow's bottlenecks. Prior to the LLM era, a 2-layer abstraction (kernel and graph layers) sufficiently captured most ML workloads. Nowadays, with the emergence of new training paradigms and application ecosystems, we may soon the need for additional software layers beyond the 3-layer framework presented here.
 
 
-### Additional References
+## Additional References
 
 1. Semi-analysis: The Memory Wall: [https://semianalysis.com/2024/09/03/the-memory-wall/](https://semianalysis.com/2024/09/03/the-memory-wall/)
 2. Thunderkitten: 2D tile, 1d vector: [https://hazyresearch.stanford.edu/blog/2024-05-12-tk](https://hazyresearch.stanford.edu/blog/2024-05-12-tk)
