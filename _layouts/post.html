@@ -4,7 +4,7 @@ layout: default
 
 <article class="post">
   <div class="post-container">
-    <!-- Table of Contents -->
+    <!-- Table of Contents - Now floating -->
     <nav class="toc-nav">
       <div class="toc-wrapper">
         <h4>Table of Contents</h4>
@@ -12,7 +12,7 @@ layout: default
       </div>
     </nav>
 
-    <!-- Main Content -->
+    <!-- Main Content - Now centered -->
     <div class="post-content">
       <h1>{{ page.title }}</h1>
 
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   if (headings.length === 0) {
     document.querySelector('.toc-nav').style.display = 'none';
-    document.querySelector('.post-content').style.marginLeft = '0';
+    // No need to adjust margin since content is already centered
     return;
   }
   

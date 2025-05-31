@@ -58,7 +58,7 @@ Another excellent example is the use of online softmax in Flash Attention. Softm
 
 ### Graph layer
 
-Graph programming layer focuses on optimizing the model graph executed on a single GPU. Programming at this layer emphasizes composability and ease of modification. Historically, composability came at the cost of performance, which is why dedicated frameworks like ONNXRuntime and TensorRT were widely used in serious inference scenarios. Today, PyTorch has captured significant inference market share due to two factors: reduced PyTorch overhead through CUDA graphs and torch.compile, and larger and larger models that dwarf framework overhead.
+The graph layer focuses on optimizing the model graph executed on a single GPU. Programming at this layer emphasizes composability and ease of modification. Historically, composability came at the cost of performance, which is why dedicated frameworks like ONNXRuntime and TensorRT were widely used in serious inference scenarios. Today, PyTorch has captured significant inference market share due to two factors: reduced PyTorch overhead through CUDA graphs and torch.compile, and larger and larger models that dwarf framework overhead.
 
 Graph-layer optimizations exploit the characteristics of consecutive kernels and the inherent properties of ML models. The overarching goal remains reducing communication and memory usage while improving compute efficiency. Specifically, there are the following common types of optimization:
 
