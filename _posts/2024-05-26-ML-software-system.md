@@ -4,19 +4,19 @@ title: Understanding LLM System with 3-layer Abstraction
 tags: [LLM, System]
 ---
 
-Performance optimization of LLM systems requires a thorough understanding of the full software stack. As the ML ecosystem becomes increasingly complex, understanding these systems demands different levels of abstraction. This article is not a comprehensive review or best practice guide, but rather a sharing of my perspective on the complete picture and key bottlenecks.
+Performance optimization of LLM systems requires a thorough understanding of the full software stack. As the ML ecosystem becomes increasingly complex, understanding these systems demands different levels of abstraction. This article is not a comprehensive review or best practice guide, but rather a sharing of my perspective on the overall picture of LLM optimization landscapes.
 
-First, any system is designed to achieve specific objectives within given constraints. For LLM systems, the most critical objectives are **throughput** and **latency**. These two objectives must be optimized within three fundamental constraints: **compute** (hardware operation speed and supported types), **memory** (capacity and hierarchy), and **communication** (memory & network bandwidth, latency, and hierarchy). Google provides excellent coverage of these concepts in the Roofline section of their [Scaling Book](https://jax-ml.github.io/scaling-book/roofline/).
+First, any system is designed to achieve specific objectives within given constraints. For LLM systems, the most critical objectives are **throughput and latency**. These two objectives must be optimized within three fundamental constraints: **compute** (hardware operation speed and supported types), **memory** (capacity and hierarchy), and **communication** (memory & network bandwidth, latency, and hierarchy). Google provides excellent coverage of these concepts in the Roofline section of their [Scaling Book](https://jax-ml.github.io/scaling-book/roofline/).
 
 ## Explain 3-layer Abstraction 
 
-To navigate the complexity of modern LLM systems, I find it helpful to think in terms of three distinct abstraction layers: the **kernel layer**, **graph layer**, and **system layer**. Each layer addresses different types of constraints and optimization opportunities, creating a comprehensive framework for understanding performance bottlenecks and improvement strategies, which we will cover in details.
+To navigate the complexity of modern LLM systems, I find it helpful to think in terms of three distinct abstraction layers: **kernel layer**, **graph layer**, and **system layer**. Each layer addresses different types of constraints and optimization opportunities, creating a good framework for understanding and improvement, which we will cover in details.
 
 The table below summarizes the basics of 3 abstraction layers.
 
 | Abstraction Layer |  Operations | Representative Software |
 | :---- | :---- | :---- |
-| Kernel | Scalar/Vector/Tile instructions | CUDA, Triton |
+| Kernel | Scalar/Vector/Tile instructions | CUDA C & PTX, Triton |
 | Graph | Tensor primitives | PyTorch, JAX, TensorRT, ONNXRuntime |
 | System | Sharding, Batching, Offloading, .. | TensorRT-LLM, vLLM, Megatron-LM, VeRL |
 
@@ -42,10 +42,12 @@ Kernel performance is measured by latency (throughput is not directly exposed at
 
 There are also specific optimizations for different hardware or different generations of hardware. Most of them, including NVIDIA GPU, do not have detailed public documentation on the low-level details.
 
-A simple example of kernel programming is the [matrix multiplication from the official Triton tutorial](https://triton-lang.org/main/getting-started/tutorials/03-matrix-multiplication.html#sphx-glr-getting-started-tutorials-03-matrix-multiplication-py). An illustration figure is shown below. Several key points to note:
+<figure>
+  <img src="/images/blog1/kernel.png" alt="Visualization of a GEMM kernel executed on a GPU">
+  <figcaption>Visualization of a GEMM kernel executed on a GPU, from the <a href="https://triton-lang.org/main/getting-started/tutorials/03-matrix-multiplication.html#sphx-glr-getting-started-tutorials-03-matrix-multiplication-py">Triton MatMul example</a></figcaption>
+</figure>
 
-![Visualization of a GEMM kernel executed on a GPU](/images/blog1/kernel.png)
-
+Several key points to note:
 1. For **output data locality**, this kernel uses output tiling, i.e., splitting the workload by output tiles, and distributes partitioned workloads, i.e., blocks to each processor. In this way the accumulator can be held locally, avoiding read/write to main memory.
 2. For **input data locality**, because each block reads a row of tiles from input 1 and a column of tiles from input 2, it leverages L2 cache by launching blocks in "grouped ordering" to reuse input data.
 3. Within a block, the arithemic operations are described in tile language, and Triton compiles the tile language to hardware instructions. This differs from CUDA, where users have fine-grained control along with the responsibility to low-level CUDA cores, TensorCore, and shared memory.
@@ -64,8 +66,12 @@ Graph-layer optimizations exploit the characteristics of consecutive kernels and
 
 **Fusion** is another commonly used technique and often confuses with merging. It combines multiple kernels without altering the mathematical formulation. This technique overlaps communication with computation, avoids writeback to main memory, and reduces kernel launch overhead. For example, Conv/ReLU fusion performs in-place ReLU operations instead of writing/reading to the main memory. In multi-GPU inference, GEMM/AllReduce fusion is sometimes to reduce latency, which synchronizes partial outputs immediately upon computation.
 
-The following graph programming example is an optimized Llama3 execution graph on GPU. Each rectangle represents a kernel launched to the GPU, with merging operations denoted by **&** and fusion operations denoted by **+**.
-![Visualization of Llama3 execution graph](/images/blog1/model.png)
+<figure>
+  <img src="/images/blog1/model.png" alt="Visualization of Llama3 execution graph">
+  <figcaption>Optimized Llama3 execution graph. Each rectangle is a kernel launched to the GPU.
+  <br>
+  Merging is denoted by <strong>&</strong> and fusion is denoted by <strong>+</strong>.</figcaption>
+</figure>
 
 **Quantization** aka low precision, is one of the most widely used techniques in ML system optimization and a great example of algorithm/hardware co-evolution. In the CNN era, 8-bit quantization is typically good enough. In the LLM era, the need for more compression keeps pushing the frontier of quantization. I initialized and have been working on [TensorRT Model Optimizer](https://github.com/NVIDIA/TensorRT-Model-Optimizer/tree/main) for the past few years and we have a [brief description of quantization](https://nvidia.github.io/TensorRT-Model-Optimizer/guides/_basic_quantization.html). Some general observations on the current stage of quantization:
 
@@ -82,8 +88,10 @@ More graph-level optimizations actually occur during model design within hardwar
 
 This layer deals with the resources needed by a model and the constraints of a pod - the minimum repeatable deployment unit. As an example, DeepSeek V3 has an official implementation with [inference pods of 176 GPUs](https://github.com/deepseek-ai/open-infra-index/blob/main/202502OpenSourceWeek/day_6_one_more_thing_deepseekV3R1_inference_system_overview.md) and [a training pod (whole cluster) of 2048 GPUs](https://arxiv.org/pdf/2412.19437). At the system level, we pay less attention to the internal details of a model, but abstract it as an elastic program (engine) with computation, memory, and communication need.
 
-Below we show an example of system layer using a simplified view of PD-disaggregated inference, from the [Mooncake paper](https://arxiv.org/pdf/2407.00079):
-![Visualization of inference system architecture](/images/blog1/system.png)
+<figure>
+  <img src="/images/blog1/system.png" alt="Visualization of inference system architecture">
+  <figcaption>Example of system layer using a simplified view of PD-disaggregated inference, from <a href="https://arxiv.org/pdf/2407.00079">Mooncake paper</a></figcaption>
+</figure>
 
 Starting from this layer, inference and training frameworks diverge significantly. Inference frameworks like vLLM, SGLang, and TensorRT-LLM emphasize high-performance kernel, parallelism, smart request batching, and efficient KV management. Training frameworks iterate rapidly as algorithms evolve, with many serving as scaffolds for parallelism implementation (e.g., Megatron-LM, DeepSpeed). With the recent rise of Reinforcement Learning, there are more connections between training and inference - for example, VeRL emphasizes seamless integration of Megatron-LM, vLLM, and other frameworks.
 
@@ -154,14 +162,9 @@ cornerstone just like speculative execution is for modern CPUs.
 System design operates on shifting foundations, where the optimal trade-off between physical constraints, model architecture, and applications continuously evolves. Today's optimal solutions may become tomorrow's bottlenecks. Prior to the LLM era, a 2-layer abstraction (kernel and graph layers) sufficiently captured most ML workloads. Nowadays, with the emergence of new training paradigms and application ecosystems, we may soon the need for additional software layers beyond the 3-layer framework presented here.
 
 
-### Reference
+### Additional References
 
-1. [https://jax-ml.github.io/scaling-book/](https://jax-ml.github.io/scaling-book/)  
-2. Semi-analysis: https://semianalysis.com/2024/09/03/the-memory-wall/  
-3. AI and memory wall: [https://arxiv.org/pdf/2403.14123](https://arxiv.org/pdf/2403.14123)  
-4. [https://arxiv.org/html/2402.13499v1](https://arxiv.org/html/2402.13499v1)  
-9. Thunderkitten: 2D tile, 1d vector: [https://hazyresearch.stanford.edu/blog/2024-05-12-tk](https://hazyresearch.stanford.edu/blog/2024-05-12-tk)  
-10. SambaNova hotchips talk: [https://hc2024.hotchips.org/assets/program/conference/day1/48_HC2024.Sambanova.Prabhakar.final-withoutvideo.pdf](https://hc2024.hotchips.org/assets/program/conference/day1/48_HC2024.Sambanova.Prabhakar.final-withoutvideo.pdf)  
-11. CUDA GTC talk: https://www.nvidia.com/en-us/on-demand/session/gtc25-s72383/  
-12. Deepseek inference system: [https://github.com/deepseek-ai/open-infra-index/blob/main/202502OpenSourceWeek/day_6_one_more_thing_deepseekV3R1_inference_system_overview.md](https://github.com/deepseek-ai/open-infra-index/blob/main/202502OpenSourceWeek/day_6_one_more_thing_deepseekV3R1_inference_system_overview.md)  
-14. PD disaggregated  
+1. Semi-analysis: The Memory Wall: [https://semianalysis.com/2024/09/03/the-memory-wall/](https://semianalysis.com/2024/09/03/the-memory-wall/)
+2. Thunderkitten: 2D tile, 1d vector: [https://hazyresearch.stanford.edu/blog/2024-05-12-tk](https://hazyresearch.stanford.edu/blog/2024-05-12-tk)
+3. CUDA talk at GTC 2025: [https://www.nvidia.com/en-us/on-demand/session/gtc25-s72383/](https://www.nvidia.com/en-us/on-demand/session/gtc25-s72383/)
+4. Scaling book: [https://jax-ml.github.io/scaling-book/](https://jax-ml.github.io/scaling-book/)

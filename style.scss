@@ -382,3 +382,20 @@ tr:nth-child(even) {
   margin-right: 0.5rem;
   display: inline-block;
 }
+
+/*********************/
+/* FIGURE STYLES */
+/*********************/
+
+figure {
+  margin: 20px 0;
+  text-align: center;
+}
+
+figcaption {
+  font-size: 14px;
+  color: $gray;
+  text-align: center;
+  margin-top: 8px;
+  font-style: italic;
+}
