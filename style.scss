@@ -248,6 +248,14 @@ nav {
 .posts > .post {
   padding-bottom: 2em;
   border-bottom: 1px solid $lightGray;
+  
+  h1 {
+    font-size: 24px;
+    
+    @include mobile {
+      font-size: 22px;
+    }
+  }
 }
 
 .posts > .post:last-child {
@@ -263,6 +271,11 @@ nav {
     color: $gray;
     font-size: 22px;
     font-style: italic;
+    
+    // Make disclaimer blockquotes smaller
+    &:first-child {
+      font-size: 14px;
+    }
   }
 
   .comments {
