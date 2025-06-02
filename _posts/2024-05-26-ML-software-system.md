@@ -4,7 +4,7 @@ title: Understanding LLM System with 3-layer Abstraction
 tags: [LLM, System]
 ---
 
-Performance optimization of LLM systems requires a thorough understanding of the full software stack. As the ML ecosystem becomes increasingly complex, understanding these systems demands different levels of abstraction. This article is not a comprehensive review or best practice guide, but rather a sharing of my perspective on the overall picture of LLM optimization landscapes.
+Performance optimization of LLM systems requires a thorough understanding of the full software stack. Somehow I couldn't find a comprehensive article that covers the big picture yet, so instead of waiting for one, I decided to write this article. This article is not a comprehensive review or best practice guide, but rather a sharing of my overall perspective on the current LLM system landscape.
 
 First, any system is designed to achieve specific objectives within given constraints. For LLM systems, the most critical objectives are **throughput and latency**. These two objectives must be optimized within three fundamental constraints: **compute** (hardware operation speed and supported types), **memory** (capacity and hierarchy), and **communication** (memory & network bandwidth, latency, and hierarchy). Google provides excellent coverage of these concepts in the Roofline section of their [Scaling Book](https://jax-ml.github.io/scaling-book/roofline/).
 
