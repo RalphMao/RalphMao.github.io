@@ -16,7 +16,7 @@ The table below summarizes the basics of 3 abstraction layers.
 
 | Abstraction Layer |  Operations | Representative Software |
 | :---- | :---- | :---- |
-| Kernel | Scalar/Vector/Tile instructions | CUDA C & PTX, Triton |
+| Kernel | Scalar/Vector/Tile instructions | CUDA C/C++ & PTX, Triton |
 | Graph | Tensor primitives | PyTorch, JAX, TensorRT, ONNXRuntime |
 | System | Sharding, Batching, Offloading, .. | TensorRT-LLM, vLLM, Megatron-LM, VeRL |
 
@@ -25,17 +25,17 @@ It should be noted that Triton and CUDA belong in the same category, despite Tri
 Let's examine each layer in detail, starting from the lowest level of abstraction.
 
 ### Kernel layer
-The kernel layer focuses on software execution at the micro-architecture level. A kernel s the smallest unit of workload executed on an accelerator including GPU.
+The kernel layer focuses on software execution at the micro-architecture level. A kernel is the smallest unit of workload executed on an accelerator, including GPU.
 
 The programming model at this layer maps available hardware resources (general-purpose cores, matrix multiplication units, near-processor memory, GPU memory) to programming concepts (threads & blocks, local memory, global memory) and exposes the necessary instructions for users to manipulate them.
 
-CUDA C language has been the de facto standard for GPU kernel programming. As the need of kernel programming increases in recent years, a number of choices at this layer have become available. Two different trends are observed, which are not mutually exclusive:
+CUDA C/C++ language has been the de facto standard for GPU kernel programming. As the need of kernel programming increases in recent years, a number of choices at this layer have become available. Two different trends are observed, which are not mutually exclusive:
 
 1. **Tile languages** like Triton, CuTile, and TileLang elevate the control granularity from thread to block and data granularity from scalar to tile. Users only handle block-level logic while intra-block arrangement is delegated to the compiler. This approach offers two key advantages: simpler programming for users, especially machine learning engineers and researchers; and easier maintenance of cross-platform compatibility. For example, whether to use 128x32 MMA instructions or 32x32 MMA instructions is now decided by the compiler rather than users, making it easier to support different hardware.
 
-2. **Template frameworks** like CUTLASS. Since matrix multiplication is the most important optimization problem in kernel programming, CUTLASS handles the core matrix multiplication while leaving customizable "peripheral" code to users. 
+2. **Template frameworks** like CUTLASS. Since matrix multiplication is the most important optimization problem in kernel programming, CUTLASS handles the core matrix multiplication while leaving customizable "peripheral" code to users, but users still have full control of the code.
 
-Kernel performance is measured by latency (throughput is not directly exposed at this layer). Most optimization techniques can be categorized into:
+Kernel performance is measured by latency (throughput is also mapped to latency of different input shapes). Most optimization techniques can be categorized into:
 1. **Data locality**. Example: utilize near-processor register, cache and shared memory to avoid data movement.
 2. **Data movement efficiency**. Example: use swizzling to avoid bank conflicts; overlap data loading and computation.
 3. **Special instructions**. Example: use TensorCore MMA (matrix multiplication accumulation) and Hopper TMA (tensor matrix accumulation).
@@ -58,7 +58,7 @@ Another excellent example is online softmax in Flash Attention. Softmax is norma
 
 ### Graph layer
 
-The graph layer focuses on optimizing the model graph executed on a single GPU. Programming at this layer emphasizes composability and ease of modification. Historically, composability came at the cost of performance, which is why dedicated frameworks like ONNXRuntime and TensorRT were widely used in serious inference scenarios. Today, PyTorch has captured significant inference market share due to two factors: **smaller framework overhead** by [CUDA Graphs](https://developer.nvidia.com/blog/cuda-graphs/), [torch.compile](https://docs.pytorch.org/tutorials/intermediate/torch_compile_tutorial.html), etc; **larger model workload** like LLM that dwarf framework overhead.
+The graph layer focuses on optimizing the model graph executed on a single GPU. Programming at this layer emphasizes composability and ease of modification. Historically, composability came at the cost of performance, which is why ONNXRuntime, TensorRT, FasterTransformer were used for serious infence scenarios. Today, PyTorch has gradually overcome its original weakness and captured significant inference market, attributing to two factors: **reduced overhead** from [CUDA Graphs](https://developer.nvidia.com/blog/cuda-graphs/), [torch.compile](https://docs.pytorch.org/tutorials/intermediate/torch_compile_tutorial.html), etc; **increased model workload** like LLM that dwarf framework overheads.
 
 Graph-level optimizations exploit the characteristics of consecutive kernels and the inherent properties of ML models. The overarching goal remains reducing communication and memory usage while improving compute efficiency. Specifically, there are the following common types of optimization:
 
@@ -78,7 +78,9 @@ Graph-level optimizations exploit the characteristics of consecutive kernels and
 1. Quantization extends beyond most common weight quantization to activations, KV cache, gradients, and communication.
 2. Inference typically leads training in precision reduction. As of 2025, FP4 is largely de-risked for inference with FP8 already becoming mainstream, while training shows early FP8 adoption with BF16 as the standard.
 
-**Sparsity** traces back to Yann LeCun's [Optimal Brain Damage](https://proceedings.neurips.cc/paper/1989/hash/6c9882bbac1c7093bd25041881277658-Abstract.html) (1989). Early work focused on static sparsity like fine-grained weight pruning, channel pruning and 2:4 sparsity. In the LLM era, evidence suggests total parameter count significantly impacts performance, driving increased interest in dynamic sparsity techniques such as prefill sparsity, compressed KV cache and dynamic KV loading.
+**Sparsity** has deep historical roots, tracing back to Yann LeCun's [Optimal Brain Damage](https://proceedings.neurips.cc/paper/1989/hash/6c9882bbac1c7093bd25041881277658-Abstract.html) (1989), and was revitalized for modern neural networks through works like [Deep Compression](https://arxiv.org/abs/1510.00149). Early research concentrated on static sparsity approaches, including fine-grained weight pruning, channel pruning, and 2:4 sparsity patterns. In 
+the LLM era, evidence suggests total parameter count significantly impacts performance, driving 
+increased interest in dynamic sparsity techniques such as prefill sparsity, compressed KV cache and 
 
 Additional common GPU optimizations include **CUDA graphs** and **multi-stream execution**. CUDA graphs pre-record kernel dependency graphs to reduce launch latency, while multi-stream execution overlaps small-workload kernels to improve GPU utilization.
 
@@ -107,13 +109,13 @@ Choices of parallelism is determined by memory and communication constraints. Ov
 | Data parallel | Parallelize at batch dimension | No improvement for latency. No communication during inference and low communication during training. |
 | Pipeline parallel | Parallelize at batch and layer dimensions | No improvement for latency. Low communication for both inference and training. Saves model memory. |
 | Tensor parallel | Parallelize FC layers at row&column dimensions and attention at head dimension | Improves latency. High communication cost. Saves model memory. |
-| Expert parallel | Parallelize MoE at expert dimension | Little improvement for latency. Low communication cost when experts are highly sparse. Saves model memory. |
+| Expert parallel | Parallelize MoE at expert dimension | Improves latency at large-batch regions. Lower communication cost than TP when activated experts are fewer than TP ranks. Saves model memory. |
 | Sequence parallel | Parallelize layernorm or attention projection layers at sequence dimension | Augments tensor parallel. Low communication cost. |
 | Context parallel | Parallelize all layers at sequence dimension | Improves latency for long context prefill. High communication cost. |
-| FSDP | Shard weights | Overlaps computation and communication, but each shard still carries full computation. Training only. |
-| ZeRO | Shard optimizer states (stage 1), gradients (stage 2), and weights (stage 3) | Training only. |
+| ZeRO | Shard optimizer states (stage 1), gradients (stage 2), and weights (stage 3) | Mainly for training. Overlaps computation and communication, but each shard still carries full computation.|
+| FSDP | Shard weights, gradients and optimizer states | Almost identical to ZeRO, see [the mapping between FSDP & DeepSpeed](https://huggingface.co/docs/accelerate/en/usage_guides/fsdp#mapping-between-fsdp-sharding-strategies-and-deepspeed-zero-stages). |
 
-To choose the right parallelism for inference, when the model size is not too large (<100GB), a common practice is to scale up tensor parallelism to the point where communication latency becomes non-trivial, then scale out with pipeline parallelism and data parallelism. For very large models like DeepSeek V3, choosing the right parallelism becomes a much more complex problem. This is why we're seeing tools like [NVIDIA Dynamo](https://github.com/ai-dynamo/dynamo) to optimize parallelism strategies.
+To choose the right parallelism for inference, when the model size is not too large (<100GB), a common practice is to scale up tensor parallelism to the point where communication latency becomes non-trivial, then scale out with pipeline parallelism and data parallelism. For highly sparse MoE models, TP may not be favored over EP and choosing the right parallelism in a cluster becomes more difficult. This is why we're seeing tools like [NVIDIA Dynamo](https://github.com/ai-dynamo/dynamo) to optimize parallelism strategies.
 The complexity also applies to training-time parallelism, which is usually designed and hand-tuned specifically for model architecture and datacenter configurations.
 
 #### Inference system optimizations
@@ -163,6 +165,7 @@ cornerstone just like speculative execution is for modern CPUs.
 
 System design operates on shifting foundations, where the optimal trade-off between physical constraints, model architecture, and applications continuously evolves. Today's optimal solutions may become tomorrow's bottlenecks. Prior to the LLM era, a 2-layer abstraction (kernel and graph layers) sufficiently captured most ML workloads. Nowadays, with the emergence of new training paradigms and application ecosystems, we may soon the need for additional software layers beyond the 3-layer framework presented here.
 
+> **Acknowledgement**: This blog has been revised based on feedbacks from Julien Demouth, Song Han and June Yang.
 
 ## Additional References
 
