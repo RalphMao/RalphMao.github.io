@@ -7,7 +7,7 @@ layout: default
   {% assign all_tags = site.posts | map: 'tags' | join: ',' | split: ',' | uniq | sort %}
   {% for tag in all_tags %}
     {% if tag != '' %}
-      <button class="tag-btn" data-tag="{{ tag }}">{{ tag }}</button>
+      <button class="tag-btn{% unless tag == 'Reading Note' %} active{% endunless %}" data-tag="{{ tag }}">{{ tag }}</button>
     {% endif %}
   {% endfor %}
 </div>
@@ -40,6 +40,14 @@ layout: default
 document.addEventListener('DOMContentLoaded', function() {
   const tagButtons = document.querySelectorAll('.tag-btn');
   const posts = document.querySelectorAll('.post');
+
+  // Hide Reading Note posts by default
+  posts.forEach(post => {
+    const postTags = post.getAttribute('data-tags');
+    if (postTags.includes('Reading Note')) {
+      post.style.display = 'none';
+    }
+  });
 
   tagButtons.forEach(button => {
     button.addEventListener('click', function() {
