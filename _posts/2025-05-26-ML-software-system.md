@@ -38,7 +38,7 @@ CUDA C/C++ language has been the de facto standard for GPU kernel programming. A
 Kernel performance is measured by latency (throughput is also mapped to latency of different input shapes). Most optimization techniques can be categorized into:
 1. **Data locality**. Example: utilize near-processor register, cache and shared memory to avoid data movement.
 2. **Data movement efficiency**. Example: use swizzling to avoid bank conflicts; overlap data loading and computation.
-3. **Special instructions**. Example: use TensorCore MMA (matrix multiplication accumulation) and Hopper TMA (tensor matrix accumulation).
+3. **Special instructions**. Example: use TensorCore MMA (matrix multiplication accumulation) and Hopper TMA (tensor memory accelerator).
 
 There are also specific optimizations for different hardware or different generations of hardware. Most of them, including NVIDIA GPU, do not have detailed public documentation on the low-level details.
 
