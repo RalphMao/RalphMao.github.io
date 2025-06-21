@@ -80,7 +80,7 @@ Graph-level optimizations exploit the characteristics of consecutive kernels and
 
 **Sparsity** has deep historical roots, tracing back to Yann LeCun's [Optimal Brain Damage](https://proceedings.neurips.cc/paper/1989/hash/6c9882bbac1c7093bd25041881277658-Abstract.html) (1989), and was revitalized for modern neural networks through works like [Deep Compression](https://arxiv.org/abs/1510.00149). Early research concentrated on static sparsity approaches, including fine-grained weight pruning, channel pruning, and 2:4 sparsity patterns. In 
 the LLM era, evidence suggests total parameter count significantly impacts performance, driving 
-increased interest in dynamic sparsity techniques such as prefill sparsity, compressed KV cache and 
+increased interest in dynamic sparsity techniques such as prefill sparsity, compressed KV cache and dynamic KV loading.
 
 Additional common GPU optimizations include **CUDA graphs** and **multi-stream execution**. CUDA graphs pre-record kernel dependency graphs to reduce launch latency, while multi-stream execution overlaps small-workload kernels to improve GPU utilization.
 
