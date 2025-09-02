@@ -4,7 +4,7 @@ title: A Dive into LLM Quantization
 tags: [LLM, System]
 ---
 
-Quantization has been adopted by many model providers to reduce inference cost. In my previous [LLM system blog](https://ralphmao.github.io/ML-software-system/), I briefly covered quantization. This article is a more detailed review of quantizatino formats and methods, plus an informal analysis of how quantization is done by leading AI labs.
+Quantization has been adopted by many model providers to reduce inference cost. In my previous [LLM system blog](https://ralphmao.github.io/ML-software-system/), I briefly covered quantization. This article is a more detailed review of modern quantization formats and methods, plus an informal analysis of how quantization is done by leading AI labs.
 
 ## Quantization formats  
 There are many design details of a quantization format. The main format is the element precision. Beyond the main format, many factors could also impact the quantization quality of a model. Below is a list of design details of quantization: 
