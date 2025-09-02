@@ -28,9 +28,9 @@ A summary of prominent quantization formats and algorithms adopted by frontier L
 
 | Model | Main Format | Format Details | Quantization Method |
 | :---- | :---- | :---- | :---- |
-| Llama 3 & 4 | FP8 | **Weights & Activations**: 1D-channel FP32 scaling, dynamic scaling | PTQ with online activation clipping |
+| Llama 3 & 4 | FP8 | **Weights & Activations**: 1D-channel/token FP32 scaling, dynamic scaling | PTQ with online activation clipping |
 | DeepSeek V3 & R1 | FP8 | **Weights**: 128×128 2D-block FP32 scaling; **Activations**: 128×1 1D-block FP32 scaling, dynamic scaling | Native quantized training |
-| DeepSeek V3.1 | FP8 | Same as DeepSeek V3, but with UE8M0 block scaling | Not disclosed; likely native quantized training |
+| DeepSeek V3.1 | FP8 | Same as DeepSeek V3, except UE8M0 instead of FP32 scaling | Not disclosed; likely native quantized training |
 | GPT-OSS | FP4 | **Weights**: 32×1 1D-block UE8M0 scaling (MXFP4) | Not disclosed; likely quantization-aware training |
 | Kimi-K2 | FP8 | Same as DeepSeek V3 | Post-training quantization |
 | DeepSeek, Kimi-K2, Llama4 (NVIDIA release) | FP4 | **Weights & Activations**: 16×1 1D-block E4M3 scaling, FP32 second-level scaling (NVFP4) | Post-training quantization |
