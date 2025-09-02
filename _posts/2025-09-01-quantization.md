@@ -16,7 +16,7 @@ There are many design details of a quantization format. The main format is the e
 
  - **Block format**: The number of elements sharing a scale factor. Fine-grained scaling (per-channel, small blocks like 32x1) provides better accuracy by adapting to local distributions, while coarse-grained (per-tensor) is computationally cheaper but less accurate. 
 
- - **Scale calculation**: Dynamic scaling (calculated per step, best accuracy but slower), Static scaling (pre-computed via calibration, inference only), or Delayed scaling (using historical statistics, training only). Dynamic provides better accuracy while static reduces runtime overhead.
+ - **Scale calculation**: Dynamic scaling (calculated per step, best accuracy but slower, also called *current scaling* in training), Static scaling (pre-computed via calibration, inference only), or Delayed scaling (using historical statistics, training only). Dynamic provides better accuracy while static reduces runtime overhead.
 
  - **Affine vs symmetric**: Symmetric quantization maps data symmetrically around zero (computationally simpler), while affine quantization allows asymmetric mapping with zero-point parameters (better for non-zero-centered data but requires additional storage). 
 
