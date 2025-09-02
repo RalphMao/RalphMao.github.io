@@ -105,7 +105,7 @@ During FP8 quantization of weights and activations, UE8M0 scaling factors can be
 
 <figure>
   <img src="/images/qat/deepseek_v31.png" alt="">
-  <figcaption>DeepSeek V3.1 UE8M0 scales + FP8 values quantized training, my speculation.</figcaption>
+  <figcaption>DeepSeek V3.1 quantized training with UE8M0 scales + FP8 values, my speculation.</figcaption>
 </figure>
 
 
