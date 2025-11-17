@@ -10,92 +10,79 @@ While the many of the past optimizations look like low-hanging fruits, people ma
 
 In this article, I argue we’ll see another ~1000x reduction in effective LLM application cost over the next 3 years. But the metrics will shift - not just “input tokens” and “output tokens.” Token-based pricing will persist, yet the economic model must evolve to capture the emerging needs.
 
-
-When we look at an optimization problem in a 3-year horizon, everything including the model and the way people use models will change. 
-LLM workload will not trivially and proportionally scale. The cost of today’s workload won’t reduce by 1000x, but if you look at the dominant workload in 3 years and look back, you may find it 1000x more expensive to run with today's technology. 
+When we look at an optimization problem on a 3‑year horizon, everything changes: the models, the systems, and how people use them.
+LLM workloads will not scale in a simple, proportional way. The cost of today’s workload will not just fall by 1000x; rather, if you take the dominant workload 3 years from now and try to run it on today’s stack, you may find it is 1000x more expensive.
 <figure>
   <img src="/images/token-cost/workload_future_and_now.png" alt="">
 </figure>
 
-In 2024, I saw an estimation that even if all the 7 billion people around the world talk to a chatbot for 30 minute every day, the corresponding traffic could be easily served by 100k-ish GPUs.
-In 2025, we are seeing all types of agents, especially coding agents, becoming a major source of token consumption. Compared with chatbot, agents is not simply an application that consumes more tokens. It presents a much different workload pattern.
+In 2024, I saw an estimate that even if all 7 billion people on Earth talked to a chatbot for 30 minutes every day, the corresponding traffic could still be served by on the order of 100k GPUs.
+In 2025, we are seeing reasoning models and coding agents becoming a major source of token consumption. Compared with chatbots, agents are not just applications that burn more tokens; they exhibit fundamentally different workload patterns.
 
 
 ## Predict the shift of workload patterns
 
-**Trend 1: longer context and horizon** of LLM inference.
-Longer context means not only more tokens but also higher cost per token, for example, see the [DeepSeek per-token cost curve](https://api-docs.deepseek.com/news/news250929).
+**Trend 1: longer context and horizon** of LLM inference.  
+Longer context means not only more tokens but also higher cost per token; see, for example, the [DeepSeek per-token cost curve](https://api-docs.deepseek.com/news/news250929).
 
-Longer horizon means more steps and longer time.
-From API perspective, cached tokens have quadratic costs to the number of steps, as illustrated in the following figure. Cached token read has already taken more than half of the overall cost of Cursor or Claude code, e.g. as reported in [this post](https://www.reddit.com/r/ClaudeAI/comments/1m53292/remember_the_fact_that_most_of_your_usage_is/).
-From system perspective, cached token is just KV cache. Longer lasting time of KV cache implies higher memory to compute ratio required for the system.
+Longer horizon means more steps and longer runtimes.  
+From an API perspective, cached tokens incur costs that grow quadratically with the number of steps, as illustrated in the following figure. Cache reads already account for more than half of the overall cost of coding tools like Cursor or Claude, one example reported in [this post](https://www.reddit.com/r/ClaudeAI/comments/1m53292/remember_the_fact_that_most_of_your_usage_is/).  
+From a systems perspective, cached tokens are just KV cache. Keeping KV cache alive for longer implies a higher memory-to-compute ratio for the serving system.
 
 <figure>
   <img src="/images/token-cost/multi_round_cache_token_explain.png" alt="">
-  <figcaption>An agentic task consists multiple LLM calls separated by tool calling and user interactions. Cached tokens grows linearly with LLM calls while total cache reads grows quadratically.</figcaption>
+  <figcaption>An agentic task consists of multiple LLM calls separated by tool calls and user interactions. Cached tokens grow linearly with the number of LLM calls, while total cache reads grow quadratically.</figcaption>
 </figure>
 
-Over the next 3 years, we may witness the evolution of single-task agentic LLM to forever-running agents, which will pose a greater stress on the current systems. Anthropic is among the first to emphasize the long running capability of their models, and the first to support [1-hr cache lifespan](https://www.anthropic.com/news/claude-4) in their API.
+Over the next 3 years, we may witness an evolution from single-task agentic LLMs to always-on, long-lived agents, which will put much greater stress on current systems. Anthropic is among the first to emphasize long-running capabilities in their models and to support a [1-hour cache lifespan](https://www.anthropic.com/news/claude-4) in their API.
 
-**Trend 2: wider execution paths**, represented by [asynchronous tool calling](https://arxiv.org/pdf/2412.07017), [parallel thinking](https://blog.google/products/gemini/gemini-2-5-deep-think/), specialized model calling, or [asynchronously calling itself](https://arxiv.org/pdf/2504.15466v1).
-Allowing LLM to simultaneously perform multiple tasks and scale out its thinking power could greatly enhance its capability, meanwhile reduce the time to results.
+**Trend 2: wider execution paths**, represented by [asynchronous tool calling](https://arxiv.org/pdf/2412.07017), [parallel thinking](https://blog.google/products/gemini/gemini-2-5-deep-think/), specialized models, or [asynchronously calling itself](https://arxiv.org/pdf/2504.15466v1).  
+Allowing an LLM to perform multiple tasks concurrently and scale out its “thinking” can significantly enhance capability while reducing time-to-result.
 
-This will make the token-based pricing model more difficult to sustain in the long term.
-Agent providers like [Manus](https://manus.im/pricing) has already realized this issue and they are not priced by tokens, but "credits" which considers the overall compute cost as a whole.
+This will make a purely token-based pricing model harder to sustain in the long term.  
+Agent providers like [Manus](https://manus.im/pricing) have already recognized this and price in “credits” instead of tokens, to better reflect total compute cost.
 
-
-**Speculation: training being a part of serving**. Inference is already part of training in Reinforcement Learning, and it is not a fundamental issue from system perspective to incorporate some sort of training in inference serving. After all, intelligence requires adaptation in environments, and the current way of adaptation is only context manipulation. There are already efforts to solve fundamental issues like forgetting in [Nested Learning](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/), and also approaches to alleviate system cost like [LoRA](https://thinkingmachines.ai/blog/lora/).
+**Speculation: training as part of serving**. Inference is already part of training in reinforcement learning, and there is no fundamental systems barrier to incorporating some sort of training into inference serving. After all, intelligence requires adaptation to the environment, and today’s adaptation is mostly limited to context engineering. There are active efforts to address fundamental issues like catastrophic forgetting in [Nested Learning](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/), as well as approaches like [LoRA](https://thinkingmachines.ai/blog/lora/) to reduce the system cost.
 
 
 ## Forecast the next 1000x cost saving
-Now the question is, if we predict the dominant workload pattern in 3 years, instead of looking at the most dominant workload now, what would be the major cost savings? 
-I made some bold predictions in the table below, and will explain it in more details. 
+Now the question is: if we predict the dominant workload pattern in 3 years, instead of focusing on the dominant workload today, where will the major cost savings come from?  
+I made some bold predictions in the table below and will explain them in more detail.
 
 | Optimization                                                         | Improvement <br> -measured by today's applications | Improvement <br> -measured by future applications |
 | -------------------------------------------------------------------- | ------------------------------- | ------------------------------ |
-| Memory process                                                       | 2x                              | 2x                             |
-| Chip process & microarchitecture<br>-on top of memory improvement | 1.25x                           | 2x                             |
+| Memory technology                                         | 2x                              | 2x                             |
+| Process node & microarchitecture<br>-on top of memory improvement | 1.25x                           | 2x                             |
 | Heterogeneous system scaling                                         | 2x                              | 5x                             |
 | Model & algorithm                                                    | 2x                              | 10x                            |
 | Agent scaffold                                                       | 2x                              | 10x                            |
 
-**Memory** capacity and bandwidth is currently the biggest bottleneck in LLM serving system. Of all different memory types, the most important HBM is [projected](https://newsletter.semianalysis.com/p/the-memory-wall) to advance 2 generations (HBM3 -> HBM3e -> HBM4) in 3 years and brings approximately 2x bandwidth improvement.
+**Memory** capacity and bandwidth are currently the biggest bottlenecks in LLM serving systems. Among all memory types, HBM is the most important and is [projected](https://newsletter.semianalysis.com/p/the-memory-wall) to advance two generations (HBM3e → HBM4 → HBM4e) in 3 years, bringing roughly a 2x bandwidth and capacity improvement.
 
-**Chip manufacture process & Microarchitecture** advances measured by FLOPs will be larger than memory improvement. However, the today's workload is more memory bottlenecked, therefore 
-Wider execution with increased concurrency could also better leverage this gain
+**Semiconductor process node & microarchitecture** improvements, measured by FLOPs, will likely outpace memory improvements. However, today’s workloads are more memory-bound, so the realized benefit will be smaller if workload stays constant. Wider execution paths with increased concurrency can better exploit these gains.
 
-**Heterogeneous system scaling** means scaling up/out the inference serving system with different specialized chips and node configurations. One of the example is [Rubin CPX](https://newsletter.semianalysis.com/p/another-giant-leap-the-rubin-cpx-specialized-accelerator-rack), a specialized prefilling chip as a cheaper substitute to the high-end HBM chip.
-Future agentic applications would enable more such opportunities like cross-node hierachical KV cache offloading
+**Heterogeneous system scaling** refers to scaling the inference serving system up and out with specialized chips and different node configurations. One example is [Rubin CPX](https://newsletter.semianalysis.com/p/another-giant-leap-the-rubin-cpx-specialized-accelerator-rack), a prefill-optimized GPU that can substitute for high-end HBM GPUs at lower cost. Beyond prefill-specialization, future agentic applications will create more opportunities for techniques like cross-node hierarchical KV-cache offloading.
 
-Some may wonder where compiler and system software sit on this table. They are parts of microarchitecture and heterogeneous system. Newer architecture will be more difficult to optimize with current compiler stack, and require great innovations to maintain the current utilization level. Similarly, larger scales of heterogeneous hardware system requires significant work from software to orchestrate.
+Some may wonder where compilers and system software fit in this table. They are embedded in microarchitecture and heterogeneous systems. New architectures will be harder to optimize with the current compiler stack and demand significant innovation to maintain utilization. Likewise, larger heterogeneous clusters will require substantial software work for orchestration.
 
-**Model & algorithm** have historically been the greatest factor of cost reduction since the CNN era. 
+**Model & algorithm** innovations have historically contributed the most to cost reduction ever since the CNN era.
 
- - Better data quality and smart ways to train models will keep elevating model intelligence thus saving costs. We have seen recent advances like on-policy distillation, training to reduce reasoning lengths that grealy improves
- - Efficient model architecture, especially the use of sparse/linear attentions, will drive the cost down a little bit for today's applications and a lot for future usecases.
- - Quantization-wise, many model providers now serve models in 8-bit formats, while some labs with inferior system capability still stick with bf16. 4-bit formats, represented by NVFP4 and MXFP4 (see [my previous quantization blog](/quantization/)), will expected to be widely used in 3 years.
-Overall, I will comfortably predict at least 10x from model and algorithm.
+- Better data quality and smarter training methods will continue to boost model capability and thus reduce effective cost. Recent advances like on-policy distillation and training to reduce traces are some good exmaples.
+- Efficient model architectures, especially sparse/linear attention, will reduce cost modestly for today’s workloads and dramatically for future long-context, long-horizon applications.
+- On quantization, many providers nowadays serve models in 8-bit formats, while some with inferior system capability still run bf16. 4-bit formats such as NVFP4 and MXFP4 (see [my previous quantization blog](/quantization/)) are likely to be widely deployed within 3 years.
 
-**Agent and its scaffold** is an emerging field largely driven by application needs. It determines the interaction between LLM and the environment, and also the LLM with other LLMs including itself. 
-- Interface is critical. While researchers are training models to better manipulate the interfaces of the real world, developers also realize not all interfaces are effective and efficient for LLM to operate on. [Anthropic's recent blog](https://www.anthropic.com/engineering/code-execution-with-mcp) suggests changing the interface could reduce token usage by 98.7%.
-- Memory management, specifically, managing model's short-term memory (context window) and persisting memory is also an important direction to work on.
+Overall, I’m comfortable predicting at least a 10x gain from models and algorithms alone.
 
-There are a lot of opportunities in this new field and I have no doubt it could easily bring another 10x cost saving.
+**Agent and its scaffold** is an emerging area driven by application needs. It designs how the LLM interacts with the environment, other LLMs, and itself.
 
-**Summary** - with the aforementioned optimizations, we arrive at an estimation of 2000x efficiency improvement. On the other hand, the cost of a HBM module and latest-node chip area will likely increase by 1.5-2x, depending on the manufacture cost and rising demand.
+- Interface is critical. While researchers train models to better operate on real-world APIs, developers are also learning that not all interfaces are equally effective or token-efficient for LLMs. [Anthropic’s recent blog](https://www.anthropic.com/engineering/code-execution-with-mcp) shows that changing the interface can reduce token usage by 98.7%.
+- Memory management, specifically, managing short-term memory (context window) and persistent memory, is another important lever.
+
+There are many opportunities in this space, and it could easily deliver another 10x cost reduction.
+
+**Summary** – combining the optimizations above, we arrive at an estimated ~2000x efficiency improvement. On the other hand, the cost of HBM modules and leading-edge chip area will likely increase by 1.5–2x, depending on manufacturing costs and demand.
 
 
 ## Final words
 
-Good optimizations save the costs of today. Great optimizations enable the needs of future.
-
-
-Reference:
-
-
-DeepSeek infra, memory offloading (disaggregated):
-https://github.com/deepseek-ai/open-infra-index
-
-Memory offloading (Single node):
-https://developer.nvidia.com/blog/accelerate-large-scale-llm-inference-and-kv-cache-offload-with-cpu-gpu-memory-sharing/
-And TRTLLM already supports it
+Good optimizations cut today’s costs. Great optimizations unlock tomorrow’s needs.
