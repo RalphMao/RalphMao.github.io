@@ -579,3 +579,92 @@ figcaption {
     margin-right: 0;
   }
 }
+
+// Subscribe Section
+.subscribe-section {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 24px 28px;
+  margin: 40px 0;
+
+  form {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+
+    input[type="email"] {
+      padding: 14px 18px;
+      border: 2px solid #dee2e6;
+      border-radius: 6px;
+      font-size: 18px;
+      flex: 1;
+      transition: all 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: $blue;
+        box-shadow: 0 0 0 3px rgba($blue, 0.1);
+      }
+
+      &::placeholder {
+        color: #adb5bd;
+        font-size: 18px;
+      }
+    }
+
+    button[type="submit"],
+    input[type="submit"] {
+      background-color: $blue;
+      color: white;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 6px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      svg {
+        flex-shrink: 0;
+      }
+
+      &:hover {
+        background-color: darken($blue, 10%);
+      }
+
+      &:active {
+        background-color: darken($blue, 15%);
+      }
+    }
+  }
+
+  @include mobile {
+    padding: 20px;
+    margin: 30px 0;
+
+    form {
+      flex-direction: column;
+
+      input[type="email"] {
+        font-size: 16px;
+        
+        &::placeholder {
+          font-size: 16px;
+        }
+      }
+
+      button[type="submit"],
+      input[type="submit"] {
+        width: 100%;
+        justify-content: center;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
