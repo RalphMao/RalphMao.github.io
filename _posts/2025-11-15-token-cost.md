@@ -46,7 +46,7 @@ Allowing an LLM to perform multiple tasks concurrently and scale out its “thin
 ## Forecast the next 1000x
 Now the question is: if we predict the dominant workload pattern in 3 years, instead of focusing on the dominant workload today, where will the major cost savings come from?  
 
-The baseline is set as the [DeepSeek V3/R1 inference system](https://github.com/deepseek-ai/open-infra-index#day-6---one-more-thing-deepseek-v3r1-inference-system-overview), which features FP8, Wide-EP, and PD disaggregated serving. With ~80% MFU for prefill and ~15% MFU for decode, DeepSeek's inference efficiency still outperforms most US model providers, despite being released almost a year ago.
+The software stack baseline is set as the [DeepSeek V3/R1 inference system](https://github.com/deepseek-ai/open-infra-index#day-6---one-more-thing-deepseek-v3r1-inference-system-overview), which features FP8, Wide-EP, and PD disaggregated serving. With ~35% MFU for prefill and ~15% MFU for decode, DeepSeek's software efficiency still outperforms many US model providers, despite being released almost a year ago.
 
 I made some bold predictions in the table below and will explain them in more detail.
 
