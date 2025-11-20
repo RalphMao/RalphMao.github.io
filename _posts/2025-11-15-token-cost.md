@@ -64,7 +64,7 @@ I made some bold predictions in the table below and will explain them in more de
 
 **Heterogeneous system scaling** refers to scaling the inference serving system up and out with specialized chips and different node configurations. One example is [Rubin CPX](https://newsletter.semianalysis.com/p/another-giant-leap-the-rubin-cpx-specialized-accelerator-rack), a prefill-optimized GPU that can substitute for high-end HBM GPUs at lower cost. Beyond prefill-specialization, future applications will create more opportunities for specialized chips and nodes.
 
-Some may wonder where compilers and system software fit in this table. They are embedded in microarchitecture and heterogeneous systems. New architectures will be harder to optimize with the current compiler stack and demand significant innovation to maintain utilization. Likewise, larger heterogeneous clusters will require substantial software work for orchestration.
+Some may wonder where **compilers and runtime software** fit in this table. They are embedded in microarchitecture and heterogeneous systems to avoid double counting. New architectures will be harder to optimize with the current compiler stack and demand significant innovation to maintain current utilization. Likewise, larger heterogeneous clusters will require substantial software work for orchestration.
 
 **Model & algorithm** innovations have historically contributed the most to cost reduction ever since the CNN era.
 
