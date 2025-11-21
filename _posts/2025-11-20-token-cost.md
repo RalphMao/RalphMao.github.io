@@ -18,7 +18,7 @@ LLM workloads will not scale in a simple, proportional way. The cost of today’
 </figure>
 
 In 2024, it was estimated that even if **all 8 billion people on Earth talked to a chatbot for 20 minutes daily**, [the usage would only consume on the order of half of NVIDIA’s 2024 GPU production](https://chatgpt.com/share/692015be-7b48-8009-b8d3-189b959ddeb6).
-In 2025, we are witnessing reasoning models and coding agents becoming much more greedy token consumers than chatbots. It is still quite expensive to run an agent for minutes-long tasks. Compared to chatbots, agents don't merely consume more tokens—they exhibit fundamentally different workload patterns.
+In 2025, we are witnessing reasoning models and coding agents becoming much more greedy token consumers than chatbots. It is still quite expensive to run an agent for minutes-long tasks. Compared to chatbots, agents don't merely consume more tokens—they exhibit fundamentally different workload patterns, and they will keep evolving in the next 3 years.
 
 
 ## Predict the shift of workload patterns
