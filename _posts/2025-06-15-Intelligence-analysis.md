@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Psychology of Intelligence Analysis
-tags: [Reading Note]
+tags: [Society]
 ---
 
 I have always wondered how information analysis works in government intelligence agencies or corporate business intelligence departments. A few weeks ago, I saw someone recommend [*Psychology of Intelligence Analysis*](https://www.ialeia.org/docs/Psychology_of_Intelligence_Analysis.pdf), so I read through it with the help of LLM tools. It's an interesting but somewhat verbose book that, in my opinion, could be well-summarized in two or three articles.

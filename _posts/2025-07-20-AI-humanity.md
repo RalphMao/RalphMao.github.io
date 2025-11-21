@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Beyond AI Taking Jobs: When Economy Needs No Human Consumer"
-tags: [LLM, Society]
+tags: [Society]
 ---
 
 When people consider AI's threats, unemployment tops the list. This concern is valid, but it fails to distinguish AI from past technological advances, like mechanized textile production displacing hand-weavers, ATMs replacing bank tellers. The AI revolution is not "yet another technology advance". To explain it, we first examine the role of human consumers in today's economy.

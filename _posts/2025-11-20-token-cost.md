@@ -1,7 +1,7 @@
 ---
 layout: post
 title: The Next 1000x Cost Saving of LLM 
-tags: [LLM, System]
+tags: [Technology]
 ---
 
 LLM inference costs have dropped a lot over the past three years. At a comparable quality to early ChatGPT, average per-token prices are ~1000x lower, as observed in [an a16z blog](https://a16z.com/llmflation-llm-inference-cost/). That drop has been driven by advances across the stack: 
