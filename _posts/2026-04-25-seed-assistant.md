@@ -18,7 +18,7 @@ Since the start of this year, I have been trying OpenClaw and other variants. Th
 
 ### Design
 
-With the design goal of extreme simplicity and "self-building", SeedBot has only two overwritable modules plus file-based memory, all under 100 lines of Bash:
+It is actually suprisingly simple to turn Codex into a ever-evolving personal assistant. SeedBot has only two overwritable modules plus file-based memory, all under 100 lines of Bash:
 
 <figure>
   <img src="/images/seedbot/Seedbot.png" alt="">
