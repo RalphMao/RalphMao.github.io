@@ -74,13 +74,13 @@ I have been programming for almost 20 years, and the sense of not knowing what i
 
 ### Cost of maintenance
 
-Why am I so obsessed with reducing lines of code and functionality, while many people proudly announce that they have written hundreds of thousands of lines with coding agents? My observation is that the **maintenance cost**, i.e., the cost of adding or modifying something, roughly scales with the size of the existing codebase:
+Why am I so obsessed with reducing lines of code and functionality, while many people proudly announce that they have written hundreds of thousands of lines with coding agents? My observation is that the maintenance cost, i.e., the cost of adding or modifying something, roughly scales with the size of the existing codebase:
 
 $$\text{Cost of a feature} = \text{Feature code} \times \text{Cost of understanding existing code}$$
 
 The cost of understanding existing projects ranges from $O(n)$ (extremely ill-designed) to $O(\log n)$ (extremely well-designed), where $n$ is the number of lines of code. This applies to both humans and agents. While coding agents lower the maintenance cost of existing projects, agent-era projects will grow to astounding complexity at an astounding pace (think OpenClaw's 1M lines of code), making maintenance costs significant again.
 
-My experience with SeedBot is that coding models are far better at adding code than removing it. They prefer adding a new `if` block over generalizing an existing branch, and resist deleting working code unless you are extremely explicit. When I asked Codex to merge two overlapping subsystems (memory saving and callbacks), it took several rounds of increasingly specific prompts before it would comply—even though the merged version was strictly better. There is a deep conservatism baked into these models: if existing code works, they avoid the risk of breaking it, even at the cost of long-term maintenance debt.
+My experience with SeedBot is that **coding models are far better at adding code than removing it**. They prefer adding a new `if` block over generalizing an existing branch, and resist deleting working code unless you are extremely explicit. When I asked Codex to merge two overlapping subsystems (memory saving and callbacks), it took several rounds of increasingly specific prompts before it would comply—even though the merged version was strictly better. There is a deep conservatism baked into these models: if existing code works, they avoid the risk of breaking it, even at the cost of long-term maintenance debt.
 
 
 Coding is becoming cheaper. This has a counterintuitive implication: 
